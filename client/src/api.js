@@ -25,7 +25,8 @@ export async function apiRequest(endpoint, options = {}) {
         window.location.reload();
       }
     }
-    throw new Error(data.error || 'Server error occurred');
+    const errorMsg = data.error || (res.status === 401 ? 'Invalid username or password' : `Server returned HTTP ${res.status}`);
+    throw new Error(errorMsg);
   }
 
   return data;

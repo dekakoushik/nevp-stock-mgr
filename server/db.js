@@ -246,27 +246,39 @@ function initDb() {
     );
   `);
 
-  // Seed default superadmin if not exists
-  const superadminCheck = db.prepare('SELECT id FROM users WHERE role = ?').get('superadmin');
-  if (!superadminCheck) {
-    const salt = bcrypt.genSaltSync(10);
-    const hash = bcrypt.hashSync('SuperAdmin@123', salt);
-    
-    const insertUser = db.prepare(`
+  // Seed or ensure default superadmin exists
+  const salt = bcrypt.genSaltSync(10);
+  const hash = bcrypt.hashSync('SuperAdmin@123', salt);
+
+  const existingSuper = db.prepare('SELECT id, password FROM users WHERE username = ?').get('superadmin');
+  if (!existingSuper) {
+    db.prepare(`
       INSERT INTO users (username, fullName, password, role, status)
       VALUES (?, ?, ?, ?, ?)
-    `);
+    `).run('superadmin', 'System Super Administrator', hash, 'superadmin', 'active');
+    console.log('[DB] Created superadmin account.');
+  } else {
+    // Ensure password matches SuperAdmin@123 if it was somehow altered
+    db.prepare('UPDATE users SET password = ?, status = ? WHERE username = ?').run(hash, 'active', 'superadmin');
+  }
 
-    insertUser.run('superadmin', 'System Super Administrator', hash, 'superadmin', 'active');
-
-    // Add standard admin & entry user for immediate testing
+  // Ensure standard admin & entry user exist
+  const existingAdmin = db.prepare('SELECT id FROM users WHERE username = ?').get('admin');
+  if (!existingAdmin) {
     const adminHash = bcrypt.hashSync('Admin@123', salt);
-    insertUser.run('admin', 'Floor Operations Admin', adminHash, 'admin', 'active');
+    db.prepare(`
+      INSERT INTO users (username, fullName, password, role, status)
+      VALUES (?, ?, ?, ?, ?)
+    `).run('admin', 'Floor Operations Admin', adminHash, 'admin', 'active');
+  }
 
+  const existingUser1 = db.prepare('SELECT id FROM users WHERE username = ?').get('user1');
+  if (!existingUser1) {
     const userHash = bcrypt.hashSync('user1', salt);
-    insertUser.run('user1', 'Warehouse Staff 1', userHash, 'user', 'active');
-
-    console.log('[DB] Seeded initial accounts: superadmin, admin, user1');
+    db.prepare(`
+      INSERT INTO users (username, fullName, password, role, status)
+      VALUES (?, ?, ?, ?, ?)
+    `).run('user1', 'Warehouse Staff 1', userHash, 'user', 'active');
   }
 
   // Seed initial sample inventory items if empty
