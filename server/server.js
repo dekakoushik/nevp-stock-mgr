@@ -1939,6 +1939,6 @@ app.get('/api/audit-logs', authenticateToken, requireRole('superadmin'), (req, r
   res.json({ logs });
 });
 
-app.listen(PORT, () => {
-  console.log(`[API Server] Running on http://localhost:${PORT}`);
+app.listen(PORT, '0.0.0.0', () => {
+  console.log(`[API Server] Running on http://0.0.0.0:${PORT}`);
 });
