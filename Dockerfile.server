@@ -16,8 +16,8 @@ WORKDIR /app
 # Copy dependency manifests
 COPY package*.json ./
 
-# Install dependencies and compile better-sqlite3 in place
-RUN npm ci
+# Install dependencies and explicitly rebuild better-sqlite3 from source
+RUN npm ci && npm rebuild better-sqlite3 --build-from-source
 
 # Copy server code
 COPY server ./server

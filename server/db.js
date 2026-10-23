@@ -2,13 +2,28 @@ const Database = require('better-sqlite3');
 const bcrypt = require('bcryptjs');
 const path = require('path');
 
-const dbPath = process.env.DB_PATH || path.join(__dirname, 'stock_manager.db');
-const db = new Database(dbPath);
+const fs = require('fs');
 
-// Enable WAL mode (Write-Ahead Logging) for superior multi-user concurrent reads & writes
-db.pragma('journal_mode = WAL');
-db.pragma('synchronous = NORMAL');
-db.pragma('foreign_keys = ON');
+const dbPath = process.env.DB_PATH || path.join(__dirname, 'stock_manager.db');
+console.log('[Server Startup] Target SQLite DB Path:', dbPath);
+
+const dbDir = path.dirname(dbPath);
+if (!fs.existsSync(dbDir)) {
+  fs.mkdirSync(dbDir, { recursive: true });
+}
+
+let db;
+try {
+  db = new Database(dbPath, { verbose: null });
+  console.log('[Server Startup] Database file opened successfully.');
+  // Enable WAL mode (Write-Ahead Logging) for superior multi-user concurrent reads & writes
+  db.pragma('journal_mode = WAL');
+  db.pragma('synchronous = NORMAL');
+  db.pragma('foreign_keys = ON');
+} catch (dbErr) {
+  console.error('[FATAL ERROR] Failed to initialize SQLite database:', dbErr);
+  process.exit(1);
+}
 
 function initDb() {
   // Users table
