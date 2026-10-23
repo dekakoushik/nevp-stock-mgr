@@ -10,6 +10,8 @@ import {
   StatusBar,
   Platform,
   Alert,
+  Image,
+  ActivityIndicator,
 } from 'react-native';
 import AsyncStorage from './src/storage';
 
@@ -81,8 +83,18 @@ export default function App() {
   if (loading) {
     return (
       <View style={styles.loadingContainer}>
-        <Text style={styles.loadingLogo}>NEVP</Text>
-        <Text style={styles.loadingText}>Loading Mobile Suite...</Text>
+        <StatusBar barStyle="light-content" backgroundColor="#0f172a" />
+        <View style={styles.splashBrandCard}>
+          <Image
+            source={require('./assets/icon.png')}
+            style={styles.splashLogo}
+            resizeMode="cover"
+          />
+          <Text style={styles.loadingLogo}>NEVP PLYWOOD</Text>
+          <Text style={styles.loadingSubtitle}>Industrial Stock & Production Suite</Text>
+        </View>
+        <ActivityIndicator size="large" color="#10b981" style={{ marginTop: 32 }} />
+        <Text style={styles.loadingText}>Initializing Workspace...</Text>
       </View>
     );
   }
@@ -513,5 +525,42 @@ const styles = StyleSheet.create({
     color: '#ef4444',
     fontWeight: '700',
     fontSize: 14,
+  },
+  loadingContainer: {
+    flex: 1,
+    backgroundColor: '#0f172a',
+    alignItems: 'center',
+    justifyContent: 'center',
+    padding: 24,
+  },
+  splashBrandCard: {
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  splashLogo: {
+    width: 110,
+    height: 110,
+    borderRadius: 24,
+    marginBottom: 20,
+    borderWidth: 2,
+    borderColor: '#38bdf840',
+  },
+  loadingLogo: {
+    fontSize: 24,
+    fontWeight: '800',
+    color: '#f8fafc',
+    letterSpacing: 2,
+  },
+  loadingSubtitle: {
+    fontSize: 13,
+    color: '#94a3b8',
+    marginTop: 6,
+    fontWeight: '500',
+  },
+  loadingText: {
+    marginTop: 14,
+    fontSize: 13,
+    color: '#64748b',
+    fontWeight: '500',
   },
 });
