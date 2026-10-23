@@ -3,6 +3,7 @@ services:
     build:
       context: .
       dockerfile: Dockerfile.server
+    image: nevp-stock-backend:v2.1
     container_name: nevp-stock-backend
     restart: unless-stopped
     ports:
@@ -30,6 +31,7 @@ services:
     build:
       context: ./client
       dockerfile: Dockerfile
+    image: nevp-stock-frontend:v2.1
     container_name: nevp-stock-frontend
     restart: unless-stopped
     ports:
