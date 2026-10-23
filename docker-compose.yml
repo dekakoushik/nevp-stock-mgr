@@ -1,0 +1,45 @@
+services:
+  backend:
+    build:
+      context: .
+      dockerfile: Dockerfile.server
+    container_name: nevp-stock-backend
+    restart: unless-stopped
+    ports:
+      - "${BACKEND_PORT:-5000}:5000"
+    environment:
+      - NODE_ENV=production
+      - PORT=5000
+      - JWT_SECRET=${JWT_SECRET:-corporate_stock_manager_secure_jwt_2026}
+      - DB_PATH=/app/data/stock_manager.db
+    volumes:
+      - stock_data:/app/data
+    networks:
+      - stock-net
+    healthcheck:
+      test: ["CMD-SHELL", "wget -q --spider http://localhost:5000/api/users || exit 1"]
+      interval: 15s
+      timeout: 5s
+      retries: 5
+      start_period: 10s
+
+  frontend:
+    build:
+      context: ./client
+      dockerfile: Dockerfile
+    container_name: nevp-stock-frontend
+    restart: unless-stopped
+    ports:
+      - "${FRONTEND_PORT:-80}:80"
+    depends_on:
+      backend:
+        condition: service_healthy
+    networks:
+      - stock-net
+
+volumes:
+  stock_data:
+
+networks:
+  stock-net:
+    driver: bridge
