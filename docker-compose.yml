@@ -41,6 +41,16 @@ services:
     networks:
       - stock-net
 
+  tunnel:
+    image: cloudflare/cloudflared:latest
+    container_name: nevp-stock-tunnel
+    restart: unless-stopped
+    command: tunnel --no-autoupdate --url http://frontend:80
+    depends_on:
+      - frontend
+    networks:
+      - stock-net
+
 volumes:
   stock_data:
 
