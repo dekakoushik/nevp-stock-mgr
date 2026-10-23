@@ -1,37 +1,32 @@
-# Multi-stage Dockerfile for NEVP Stock Manager Backend API
-FROM node:20-alpine AS builder
+# Production Dockerfile for NEVP Stock Manager Backend API using Debian Slim (glibc)
+# This guarantees 100% stable execution for better-sqlite3 native C++ bindings
+FROM node:20-slim
 
-# Install build dependencies for better-sqlite3 native compilation on Alpine
-RUN apk add --no-cache python3 make g++ gcc
+# Install build tools for native compilation
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    python3 \
+    make \
+    g++ \
+    gcc \
+    curl \
+    && rm -rf /var/lib/apt/lists/*
 
 WORKDIR /app
 
-# Copy root package files
+# Copy dependency manifests
 COPY package*.json ./
 
-# Install all dependencies including native modules
+# Install dependencies and compile better-sqlite3 in place
 RUN npm ci
 
-# Production runtime image
-FROM node:20-alpine AS runner
-
-WORKDIR /app
-
-# Install runtime dependencies for SQLite and healthchecks
-RUN apk add --no-cache libstdc++ wget
-
-# Set environment
-ENV NODE_ENV=production
-ENV PORT=5000
-
-# Copy node_modules from builder
-COPY --from=builder /app/node_modules ./node_modules
-COPY package*.json ./
+# Copy server code
 COPY server ./server
 
 # Create data directory for persistent SQLite database volume
 RUN mkdir -p /app/data
 ENV DB_PATH=/app/data/stock_manager.db
+ENV NODE_ENV=production
+ENV PORT=5000
 
 EXPOSE 5000
 
