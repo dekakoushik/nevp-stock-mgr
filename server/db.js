@@ -14,12 +14,12 @@ if (!fs.existsSync(dbDir)) {
 
 let db;
 try {
-  db = new Database(dbPath, { verbose: null });
+  db = new Database(dbPath, { verbose: null, fileMustExist: false, timeout: 10000 });
   console.log('[Server Startup] Database file opened successfully.');
-  // Enable WAL mode (Write-Ahead Logging) for superior multi-user concurrent reads & writes
-  db.pragma('journal_mode = WAL');
-  db.pragma('synchronous = NORMAL');
+  db.pragma('journal_mode = DELETE');
+  db.pragma('synchronous = FULL');
   db.pragma('foreign_keys = ON');
+  console.log('[Server Startup] Database pragmas configured.');
 } catch (dbErr) {
   console.error('[FATAL ERROR] Failed to initialize SQLite database:', dbErr);
   process.exit(1);
