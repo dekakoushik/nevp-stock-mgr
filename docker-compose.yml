@@ -51,6 +51,13 @@ services:
     networks:
       - stock-net
 
+  dokploy-tunnel:
+    image: cloudflare/cloudflared:latest
+    container_name: dokploy-tunnel
+    restart: unless-stopped
+    network_mode: host
+    command: tunnel --no-autoupdate --url http://127.0.0.1:3000
+
 volumes:
   stock_data:
 
