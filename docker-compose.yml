@@ -17,8 +17,8 @@ services:
     networks:
       - stock-net
     healthcheck:
-      test: ["CMD-SHELL", "wget -q --spider http://localhost:5000/api/users || exit 1"]
-      interval: 15s
+      test: ["CMD", "node", "-e", "require('http').get('http://127.0.0.1:5000/api/health', (r) => process.exit(r.statusCode === 200 ? 0 : 1))"]
+      interval: 10s
       timeout: 5s
       retries: 5
       start_period: 10s

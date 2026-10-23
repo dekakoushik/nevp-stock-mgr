@@ -17,6 +17,11 @@ app.use((req, res, next) => {
   next();
 });
 
+// Health check endpoint for Docker & load balancers
+app.get('/api/health', (req, res) => {
+  res.status(200).json({ status: 'ok', timestamp: new Date().toISOString() });
+});
+
 // Authentication Middleware
 function authenticateToken(req, res, next) {
   const authHeader = req.headers['authorization'];
