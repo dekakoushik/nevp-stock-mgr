@@ -40,7 +40,16 @@ services:
       - backend
     networks:
       - stock-net
-      - dokploy-network
+
+  tunnel:
+    image: cloudflare/cloudflared:latest
+    container_name: nevp-stock-tunnel
+    restart: unless-stopped
+    command: tunnel --protocol http2 --no-autoupdate run --token eyJhIjoiNzQ5MzFiMjIyNThhNGYwMTA0YWYzNjRlMmIzNjExNDgiLCJ0IjoiYmI0YWY3NDgtNTJiYS00ZGM4LWEyOWQtZDE0MGI4ZjQ2YzQ2IiwicyI6Ik1XSmxabVJtTTJZdE1qSXhZUzAwWXpFMkxUa3daamt0WXpFd1pqaG1aVGMyWkRSbSJ9
+    depends_on:
+      - frontend
+    networks:
+      - stock-net
 
 volumes:
   stock_data:
@@ -48,5 +57,3 @@ volumes:
 networks:
   stock-net:
     driver: bridge
-  dokploy-network:
-    external: true
