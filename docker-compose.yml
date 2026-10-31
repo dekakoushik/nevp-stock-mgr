@@ -40,23 +40,7 @@ services:
       - backend
     networks:
       - stock-net
-
-  tunnel:
-    image: cloudflare/cloudflared:latest
-    container_name: nevp-stock-tunnel
-    restart: unless-stopped
-    command: tunnel --protocol http2 --no-autoupdate --url http://frontend:80
-    depends_on:
-      - frontend
-    networks:
-      - stock-net
-
-  dokploy-tunnel:
-    image: cloudflare/cloudflared:latest
-    container_name: dokploy-tunnel
-    restart: unless-stopped
-    network_mode: host
-    command: tunnel --protocol http2 --no-autoupdate --url http://127.0.0.1:3000
+      - dokploy-network
 
 volumes:
   stock_data:
@@ -64,3 +48,5 @@ volumes:
 networks:
   stock-net:
     driver: bridge
+  dokploy-network:
+    external: true
