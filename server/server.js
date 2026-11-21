@@ -1926,6 +1926,66 @@ app.get('/api/dashboard/stats', authenticateToken, (req, res) => {
   }
 });
 
+// Reset / Clear Entire Database Entries (Superadmin only)
+app.post('/api/admin/clear-all-entries', authenticateToken, requireRole('superadmin'), (req, res) => {
+  const { moduleType, confirmation } = req.body;
+
+  if (confirmation !== 'DELETE ALL ENTRIES') {
+    return res.status(400).json({ error: "Confirmation text mismatch. You must type 'DELETE ALL ENTRIES' exactly." });
+  }
+
+  try {
+    const clearTx = db.transaction(() => {
+      if (!moduleType || moduleType === 'all') {
+        // Clear all modules
+        db.prepare('DELETE FROM finished_goods_items').run();
+        db.prepare('DELETE FROM finished_goods_lots').run();
+
+        db.prepare('DELETE FROM matte_entry_items').run();
+        db.prepare('DELETE FROM matte_entry_lots').run();
+
+        db.prepare('DELETE FROM chemical_entry_items').run();
+        db.prepare('DELETE FROM chemical_entry_lots').run();
+
+        db.prepare('DELETE FROM veneer_entry_items').run();
+        db.prepare('DELETE FROM veneer_entry_lots').run();
+
+        db.prepare('DELETE FROM face_veneer_entry_items').run();
+        db.prepare('DELETE FROM face_veneer_entry_lots').run();
+
+        db.prepare('DELETE FROM stock_transactions').run();
+      } else if (moduleType === 'finished_goods') {
+        db.prepare('DELETE FROM finished_goods_items').run();
+        db.prepare('DELETE FROM finished_goods_lots').run();
+      } else if (moduleType === 'matte_entry') {
+        db.prepare('DELETE FROM matte_entry_items').run();
+        db.prepare('DELETE FROM matte_entry_lots').run();
+      } else if (moduleType === 'chemical_entry') {
+        db.prepare('DELETE FROM chemical_entry_items').run();
+        db.prepare('DELETE FROM chemical_entry_lots').run();
+      } else if (moduleType === 'veneers_entry') {
+        db.prepare('DELETE FROM veneer_entry_items').run();
+        db.prepare('DELETE FROM veneer_entry_lots').run();
+      } else if (moduleType === 'face_veneer_entry') {
+        db.prepare('DELETE FROM face_veneer_entry_items').run();
+        db.prepare('DELETE FROM face_veneer_entry_lots').run();
+      } else {
+        throw new Error('Invalid module specified for deletion');
+      }
+    });
+
+    clearTx();
+
+    const targetDesc = !moduleType || moduleType === 'all' ? 'All stock & production entries across all 5 modules' : `All entries for ${moduleType}`;
+    logAudit(req.user.id, 'PURGE_ALL_ENTRIES', `Superadmin permanently purged: ${targetDesc}`, req);
+
+    res.json({ message: `Successfully deleted ${targetDesc.toLowerCase()}. Database has been reset.` });
+  } catch (err) {
+    console.error('Error clearing entries:', err);
+    res.status(500).json({ error: err.message || 'Failed to clear entries' });
+  }
+});
+
 // Audit Logs (Superadmin only)
 app.get('/api/audit-logs', authenticateToken, requireRole('superadmin'), (req, res) => {
   const logs = db.prepare(`

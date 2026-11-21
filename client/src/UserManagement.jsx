@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { 
   Users, UserPlus, KeyRound, Edit2, Trash2, CheckCircle2, 
-  XCircle, RefreshCw, AlertTriangle, Shield, Search
+  XCircle, RefreshCw, AlertTriangle, Shield, Search, Database, AlertOctagon
 } from 'lucide-react';
 import { apiRequest } from './api';
 
@@ -15,6 +15,12 @@ export default function UserManagement({ currentUser, showToast }) {
   const [editModal, setEditModal] = useState(null);
   const [resetModal, setResetModal] = useState(null);
   const [deleteModal, setDeleteModal] = useState(null);
+
+  // Danger Zone: Delete All Entries state
+  const [clearEntriesModal, setClearEntriesModal] = useState(false);
+  const [clearTarget, setClearTarget] = useState('all');
+  const [confirmInput, setConfirmInput] = useState('');
+  const [clearing, setClearing] = useState(false);
 
   // Form states
   const [formData, setFormData] = useState({ username: '', fullName: '', password: '', role: 'user', status: 'active' });
@@ -96,6 +102,32 @@ export default function UserManagement({ currentUser, showToast }) {
       loadUsers();
     } catch (err) {
       showToast(err.message, 'error');
+    }
+  };
+
+  const handleClearAllEntries = async (e) => {
+    e.preventDefault();
+    if (confirmInput !== 'DELETE ALL ENTRIES') {
+      showToast("Please type 'DELETE ALL ENTRIES' exactly to confirm.", 'error');
+      return;
+    }
+
+    try {
+      setClearing(true);
+      const res = await apiRequest('/admin/clear-all-entries', {
+        method: 'POST',
+        body: JSON.stringify({
+          moduleType: clearTarget,
+          confirmation: confirmInput
+        })
+      });
+      showToast(res.message || 'Entries purged successfully', 'success');
+      setClearEntriesModal(false);
+      setConfirmInput('');
+    } catch (err) {
+      showToast(err.message || 'Failed to clear entries', 'error');
+    } finally {
+      setClearing(false);
     }
   };
 
@@ -395,6 +427,107 @@ export default function UserManagement({ currentUser, showToast }) {
                 </button>
                 <button type="submit" className="btn-primary">
                   Reset Password
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* DANGER ZONE: PURGE ALL ENTRIES */}
+      <div className="card" style={{ marginTop: '2.5rem', border: '1px solid #fecaca', backgroundColor: '#fffaf0' }}>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '1rem' }}>
+          <div>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '0.6rem', color: '#dc2626', marginBottom: '0.35rem' }}>
+              <AlertOctagon size={22} />
+              <h3 style={{ fontSize: '1.1rem', fontWeight: '700' }}>Superadmin Danger Zone â€¢ Purge Inventory Entries</h3>
+            </div>
+            <p style={{ fontSize: '0.85rem', color: '#64748b', maxWidth: '650px' }}>
+              Permanently delete all registered stock lots and line items across Finished Goods, Matte, Chemicals, and Veneers. 
+              User accounts and system configurations will be safely preserved.
+            </p>
+          </div>
+          <button 
+            type="button"
+            onClick={() => {
+              setClearTarget('all');
+              setConfirmInput('');
+              setClearEntriesModal(true);
+            }} 
+            className="btn-danger"
+            style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', padding: '0.65rem 1.25rem', fontWeight: '600' }}
+          >
+            <Trash2 size={16} /> Delete All Entries
+          </button>
+        </div>
+      </div>
+
+      {/* DELETE ALL ENTRIES MODAL */}
+      {clearEntriesModal && (
+        <div className="modal-overlay">
+          <div className="modal-content" style={{ maxWidth: '520px' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', marginBottom: '1rem', color: '#dc2626' }}>
+              <AlertOctagon size={26} />
+              <h3 style={{ fontSize: '1.25rem', fontWeight: '700' }}>Confirm Permanent Deletion</h3>
+            </div>
+            
+            <p style={{ fontSize: '0.9rem', color: '#334155', lineHeight: 1.5, marginBottom: '1rem' }}>
+              You are about to permanently erase production and stock entries from the database. 
+              <strong>This action cannot be undone.</strong>
+            </p>
+
+            <form onSubmit={handleClearAllEntries} style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+              <div>
+                <label style={{ display: 'block', fontSize: '0.85rem', fontWeight: '600', marginBottom: '0.35rem' }}>
+                  Select Scope to Delete
+                </label>
+                <select 
+                  className="form-input"
+                  value={clearTarget}
+                  onChange={e => setClearTarget(e.target.value)}
+                  style={{ width: '100%', padding: '0.55rem' }}
+                >
+                  <option value="all">âš ï¸ Delete ALL Modules (Complete Factory Reset)</option>
+                  <option value="finished_goods">Finished Goods Only</option>
+                  <option value="matte_entry">Matte Press Entries Only</option>
+                  <option value="chemical_entry">Chemical Inventory Only</option>
+                  <option value="veneers_entry">Core & Fali Veneers Only</option>
+                  <option value="face_veneer_entry">Decorative Face Veneers Only</option>
+                </select>
+              </div>
+
+              <div>
+                <label style={{ display: 'block', fontSize: '0.85rem', fontWeight: '600', marginBottom: '0.35rem', color: '#991b1b' }}>
+                  Type <span style={{ fontFamily: 'monospace', backgroundColor: '#fee2e2', padding: '0.15rem 0.4rem', borderRadius: '4px' }}>DELETE ALL ENTRIES</span> to confirm:
+                </label>
+                <input 
+                  type="text" 
+                  required 
+                  className="form-input" 
+                  placeholder="DELETE ALL ENTRIES"
+                  value={confirmInput} 
+                  onChange={e => setConfirmInput(e.target.value)} 
+                  style={{ width: '100%', borderColor: confirmInput === 'DELETE ALL ENTRIES' ? '#dc2626' : undefined }}
+                />
+              </div>
+
+              <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '0.75rem', marginTop: '1rem' }}>
+                <button 
+                  type="button" 
+                  onClick={() => setClearEntriesModal(false)} 
+                  className="btn-secondary"
+                  disabled={clearing}
+                >
+                  Cancel
+                </button>
+                <button 
+                  type="submit" 
+                  className="btn-danger"
+                  disabled={confirmInput !== 'DELETE ALL ENTRIES' || clearing}
+                  style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', padding: '0.65rem 1.25rem' }}
+                >
+                  <Trash2 size={16} />
+                  {clearing ? 'Deleting...' : 'Permanently Delete'}
                 </button>
               </div>
             </form>
